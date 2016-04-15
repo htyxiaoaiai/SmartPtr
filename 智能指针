@@ -1,0 +1,385 @@
+#include<iostream>
+using namespace std;
+
+
+//class A
+//{
+//public:
+//	A(int a)
+//		:_a(a)
+//	{}
+//
+//public:
+//	int _a;
+//};
+template<typename T>
+class AutoPtr
+{
+public:
+	AutoPtr(T* ptr)
+		:_ptr(ptr)
+	{}
+	AutoPtr(AutoPtr<T>& ap)
+		:_ptr(ap._ptr)
+	{
+		ap._ptr = NULL;//权限转移
+	}
+
+	AutoPtr<T>& operator=(AutoPtr<T> & ap)
+	{
+		if (this != &ap)//自赋值
+		{
+			if (_ptr)
+			{
+				delete _ptr;
+			}
+			_ptr = ap._ptr;
+			ap._ptr = NULL;//权限转移
+		}
+		return *this;
+	}
+
+	~AutoPtr()
+	{
+		if (_ptr != NULL)
+		{
+			delete _ptr;
+			_ptr = NULL;
+		}
+	}
+public:
+	T& operator * ()//没有参数
+	{
+		return *_ptr;
+	}
+
+	T* operator->()//没有参数
+	{
+		return _ptr;
+	}
+private:
+	T* _ptr;
+};
+
+
+
+
+template<typename T>
+class ScopedPtr
+{
+	
+public:
+	ScopedPtr(T* ptr)
+		:_ptr(ptr)
+	{}
+	~ScopedPtr()
+	{
+		if (_ptr != NULL)
+		{
+			delete _ptr;
+		}
+	}
+protected:
+	ScopedPtr(ScopedPtr<T>& sp);
+	ScopedPtr<T>operator=(ScopedPtr<T>&sp);
+public:
+	T& operator*()
+	{
+		return *_ptr;
+	}
+	T* operator->()
+	{
+		return _ptr;
+	}
+private:
+	T *_ptr;
+};
+
+
+//
+//template<typename T>
+//class ScopedArraay
+//{
+//
+//public:
+//	ScopedArraay(T* ptr)
+//		:_ptr(ptr)
+//	{}
+//	~ScopedArraay()
+//	{
+//		delete _ptr;
+//	}
+//protected:
+//	ScopedArraay(ScopedArraay<T>& sp);
+//	ScopedArraay<T>operator=(ScopedArraay<T>&sp);
+//public:
+//	T& operator[](const int index)
+//	{
+//		return _ptr[index];
+//	}
+//private:
+//	T *_ptr;
+//};
+//
+
+
+//template<typename T>
+//class SharedPtr
+//{
+//public:
+//	SharedPtr(T* ptr)
+//		:_ptr(ptr)
+//		, _pCount(new int(1))
+//	{}
+//
+//	SharedPtr(const SharedPtr<T>& sp)
+//	{
+//		_ptr = sp._ptr;
+//		_pCount = sp._pCount;
+//		(*_pCount)++;
+//	}
+//
+//	SharedPtr<T>operator=(SharedPtr<T> sp)
+//	{
+//		swap(_ptr, sp._ptr);
+//		swap(_pCount, sp._pCount);
+//		return *this;
+//	}
+//
+//	~SharedPtr()
+//	{
+//		_Realse();
+//	}
+//public:
+//	void _Realse()
+//	{
+//		if (--(*_pCount) == 0)
+//		{
+//			delete _ptr;
+//			delete _pCount;
+//		}
+//	}
+//
+//public:
+//	T& operator*()
+//	{
+//		return *_ptr;
+//	}
+//	T* operator->()
+//	{
+//		return _ptr;
+//	}
+//private:
+//	T* _ptr;
+//	int* _pCount;
+//};
+
+
+
+
+template<typename T,typename D>
+class SharedPtr
+{
+public:
+	SharedPtr(T* ptr)
+		:_ptr(ptr)
+		, _pCount(new int(1))
+	{}
+
+	SharedPtr(T* ptr, D del)
+		:_ptr(ptr)
+		, _pCount(new int(1))
+		, _del(del)
+	{}
+
+	SharedPtr(const SharedPtr<T, D>& sp)
+	{
+		_ptr = sp._ptr;
+		_pCount = sp._pCount;
+		(*_pCount)++;
+	}
+
+	SharedPtr<T, D>operator=(SharedPtr<T, D> sp)
+	{
+		swap(_ptr, sp._ptr);
+		swap(_pCount, sp._pCount);
+		return *this;
+	}
+	~SharedPtr()
+	{
+		_Realse();
+	}
+public:
+	void _Realse()
+	{
+		if (--(*_pCount) == 0)
+		{
+			_del(_ptr);
+			delete _pCount;
+		}
+	}
+	
+public:
+	T& operator*()
+	{
+		return *_ptr;
+	}
+	T* operator->()
+	{
+		return _ptr;
+	}
+private:
+	T* _ptr;
+	int* _pCount;
+	D _del;
+};
+
+template<typename T>
+struct DeafaultDel
+{
+	void operator()(T* ptr)
+	{
+		cout << "DeafaultDel:" << ptr << endl;
+	}
+};
+
+template<typename T>
+struct Free
+{
+	void operator()(T*ptr)
+	{
+		cout << "Free:" << ptr << endl;
+	}
+};
+
+template<typename T>
+struct Fclose
+{
+	void operator()(T* ptr)
+	{
+		cout << "Fclose:" << ptr << endl;
+		fclose(ptr);
+	}
+};
+
+
+
+
+
+//template<typename T>
+//class SharedArray
+//{
+//public:
+//	SharedArray(T* ptr)
+//		:_ptr(ptr)
+//		, _pCount(new int(1))
+//	{}
+//	SharedArray(const SharedArray<T>& sp)
+//	{
+//		_ptr = sp._ptr;
+//		_pCount = sp._pCount;
+//		(*_pCount)++;
+//	}
+//
+//	SharedArray<T>operator=(SharedArray<T> sp)
+//	{
+//		swap(_ptr, sp._ptr);
+//		swap(_pCount, sp._pCount);
+//		return *this;
+//	}
+//	~SharedArray()
+//	{
+//		if (--(*_pCount) == 0)
+//		{
+//			delete[] _ptr;
+//			delete _pCount;
+//		}
+//	}
+//
+//public:
+//	T& operator[](int index)
+//	{
+//		return _ptr[index];
+//	}
+//private:
+//	T* _ptr;
+//	int* _pCount;
+//};
+
+//void TestSharedArray()
+//{
+//	SharedArray<int> sp1(new int[1]);
+//	SharedArray<int> sp2(sp1);
+//	SharedArray<int> sp3(sp2);
+//	sp3 = sp3;
+//	SharedArray<int> sp4(new int[3]);
+//	sp3 = sp4;
+//}
+//int main()
+//{
+//	//TestAutoPtr();
+//	//TestScopedArraay();
+//	//TestSharedPtr();
+//	TestSharedArray();
+//	getchar();
+//	return 0;
+//}
+
+
+template<class T>
+class OldAutoPtr
+{
+public:
+	OldAutoPtr(T *ptr)
+		:_ptr(ptr)
+		, _owner(true)
+	{}
+
+	//拷贝构造
+	OldAutoPtr(OldAutoPtr& ap)
+		:_ptr(ap._ptr)
+		,_owner(ap._owner)
+	{
+		ap._owner = false;
+	}
+
+	//运算符重载
+	OldAutoPtr& operator=(OldAutoPtr& ap)
+	{
+		if (ap._ptr != _ptr)//自赋值和指向同一份空间
+		{
+			if (_ptr)
+			{
+				delete _ptr;
+			}
+			_ptr = ap._ptr;
+			_owner = ap._owner;
+			ap._owner = false;
+		}
+		return *this;
+	}
+
+	//析构函数
+	~OldAutoPtr()
+	{
+		if (_owner)
+		{
+			delete _ptr;
+		}
+	}
+
+public:
+
+	T& operator *()
+	{
+		return *_ptr;
+	}
+
+	T* operator ->()
+	{
+		return _ptr;
+	}
+private:
+	T* _ptr;
+	bool _owner;//权限拥有者
+};
