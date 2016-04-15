@@ -1,0 +1,248 @@
+#define _CRT_SECURE_NO_WARNINGS
+//#include"SmartPtr.hpp"
+#include <memory>
+#include<iostream>
+using namespace std;
+
+//void TestAutoPtr()
+//{
+//	AutoPtr<int> ap1(new int(1));
+//	AutoPtr<int> ap2(ap1);
+//	AutoPtr<int> ap3(new int(2));
+//	ap3 = ap2;
+//	cout << (*ap3) << endl;
+//	AutoPtr<A> ap4(new A(2));
+//	cout << ap4->_a << endl;
+//}
+
+//void TestScopedPtr()
+//{
+//	ScopedPtr<int> sp1(new int(1));
+//	//ScopedPtr<int> sp2(sp1);
+//
+//}
+
+//void TestScopedArraay()
+//{
+//	ScopedArraay<int> sa1(new int[5]);
+//	for (int i = 0; i < 5; i++)
+//	{
+//		sa1[i] = i;
+//	}
+//	for (int i = 0; i < 5; i++)
+//	{
+//		cout <<sa1[i] << endl;
+//	}
+//	//ScopedPtr<int> sp2(sp1);
+//
+//}
+
+
+//void TestSharedPtr()
+//{
+//	SharedPtr<int> sp1(new int(1));
+//	SharedPtr<int> sp2(sp1);
+//	SharedPtr<int> sp3(sp2);
+//	sp3 = sp3;
+//	SharedPtr<int> sp4(new int(2));
+//	sp3 = sp4;
+//}
+
+//void TestSharedArray()
+//{
+//	SharedArray<int> sp1(new int[1]);
+//	SharedArray<int> sp2(sp1);
+//	SharedArray<int> sp3(sp2);
+//	sp3 = sp3;
+//	SharedArray<int> sp4(new int[3]);
+//	sp3 = sp4;
+//}
+
+//void TestOldAutoPtr()
+//{
+//	OldAutoPtr<int> ap1(new int(1));
+//	if (true)
+//	{
+//		OldAutoPtr<int> ap2(ap1);
+//		//OldAutoPtr<int> ap3(new int(2));
+//		//ap3 = ap2;
+//	}
+//	*ap1 = 10;
+//}
+//
+//
+//void test_auto_ptr()
+//{
+//	auto_ptr<int> ap1(new int(1));
+//	auto_ptr<int> ap2(ap1);
+//	auto_ptr<int> ap3;
+//	ap3 = ap2;
+//}
+//void test_uniq_ptr()
+//{
+//	unique_ptr<int> up1(new int(9));
+//	//unique_ptr<int> up2(up1);
+//}
+//
+//void test_shared_ptr()
+//{
+//	shared_ptr<int> s1(new int(10));
+//	shared_ptr<int> s2(s1);
+//	shared_ptr<int> s3;
+//	s3 = s1;
+//	cout << s1.use_count() << endl;
+//	cout << s2.use_count() << endl;
+//	cout << s3.use_count() << endl;
+//}
+//
+//
+//
+//template<class T>
+
+struct Node
+{
+public:
+	~Node()
+	{
+		cout << "delete:" << this << endl;
+	}
+public:
+	//shared_ptr<Node> _prev;
+	//shared_ptr<Node> _next;
+	weak_ptr<Node> _prev;
+	weak_ptr<Node> _next;
+};
+
+void test_round()//循环引用
+{
+	shared_ptr<Node> cur(new Node());
+	shared_ptr<Node> next(new Node());
+
+	cout << "连接前：" << endl;
+	cout << "cur:" << cur.use_count() << endl;
+	cout << "next:" << next.use_count() << endl;
+
+	cur->_next = next;
+	next->_prev = cur;
+
+	cout << "连接后：" << endl;
+	cout << "cur:" << cur.use_count() << endl;
+	cout << "next:" << next.use_count() << endl;
+
+
+	/*shared_ptr<Node> cur(new Node());
+	weak_ptr<Node> wp1(cur);*/
+}
+
+
+
+//定置删除器
+//仿函数
+struct Free
+{
+	void operator()(void * ptr)
+	{
+		cout << "Free:" << ptr << endl;
+		free(ptr);	
+	}
+};
+
+struct Fclose
+{
+	void operator ()(FILE* ptr)
+	{
+		cout << "Fclose" << ptr << endl;
+		fclose(ptr);
+	}
+};
+
+void test_shared_ptr_delete()
+{
+	int *p1 = (int*)malloc(sizeof(int));
+	shared_ptr<int> sp1(p1,Free());
+
+	FILE* p2 = fopen("test.txt", "r");
+	shared_ptr<FILE> sp2(p2,Fclose());//崩溃
+
+}
+
+
+//仿函数
+//template<class T>
+//struct Less
+//{
+//	bool operator()(const T& l, const T& r)
+//	{
+//		return l < r;
+//	}
+//};
+//
+//void test()
+//{
+//	/*Less<int> less;
+//	cout << less(1, 2) << endl;*/
+//	cout << Less<int>()(1, 2) << endl;
+//}
+
+
+
+//void TestDelete()
+//{
+//	int *p1 = (int*)malloc(sizeof(int));
+//	SharedPtr<int,Free<int>> sp1(p1);
+//	
+//	FILE* p2 = fopen("test.txt", "r");
+//	SharedPtr<FILE, Fclose<FILE>> sp2(p2);//崩溃
+//}
+
+int main()
+{
+	//TestAutoPtr();
+	//TestScopedArraay();
+	//TestSharedPtr();
+	//TestSharedArray();
+	//TestOldAutoPtr();
+	//test_auto_ptr();
+	//test_uniq_ptr();
+	//test_shared_ptr();
+
+	//test_round();//循环引用
+	test_shared_ptr_delete();
+	//test();
+	//TestDelete();
+	getchar();
+  	return 0;
+}
+
+
+void Test1()
+{
+	int *p1 = new int(1);
+	if (1)
+	{
+		return;
+	}
+	delete p1;
+}
+
+void DoSomeThing() 
+{     //...     
+	throw 2 ;
+	//... 
+} 
+void Test2 () 
+{     
+	int* p1 = new int(2);   
+	//...    
+	try 
+	{          
+		DoSomeThing();  
+	}     
+	catch(...)    
+	{          
+		//delete p1 ;         
+		throw;  
+	}     
+	//...     
+	delete p1 ;
+}
